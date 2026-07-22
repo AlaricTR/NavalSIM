@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "version": 5,
-    "notes": "Shell base damage is listed before ship resistance. The simulator applies ship resistance separately. Platform spread is linearly interpolated between minimum and maximum range. Ship definitions store hull, flooding, and turret data and populate the ship dropdown. Version 4 adds GUI hover help; game-data values are unchanged from version 3."
+    "version": 6,
+    "notes": "Version 6 adds optional mutual ship-versus-battery duels, independent gun HP, deployment geometry, naval turret targeting, retarget delays, and duel result summaries. Naval turret range/spread is hardcoded in Python as 100-200m and 2.5-8.5m. Spread values are clamped outside listed ranges."
   },
   "global_modifiers": {
     "ship_damage_resistance": 0.25
@@ -29,7 +29,12 @@
       "max_spread_m": 40,
       "firing_time_s": 4,
       "reload_time_s": 4.5,
-      "shell_type": "150mm"
+      "shell_type": "150mm",
+      "max_hp": 4000,
+      "damage_resistance": 0.25,
+      "deployment_type": "entrenched",
+      "center_spacing_m": 9,
+      "entrenchment_radius_m": 4
     },
     "Huber Lariat": {
       "name": "Huber Lariat",
@@ -39,7 +44,12 @@
       "max_spread_m": 35,
       "firing_time_s": 3,
       "reload_time_s": 4.5,
-      "shell_type": "120mm"
+      "shell_type": "120mm",
+      "max_hp": 3000,
+      "damage_resistance": 0.25,
+      "deployment_type": "entrenched",
+      "center_spacing_m": 9,
+      "entrenchment_radius_m": 4
     },
     "Koronides": {
       "name": "Koronides",
@@ -49,7 +59,12 @@
       "max_spread_m": 30,
       "firing_time_s": 3,
       "reload_time_s": 3.5,
-      "shell_type": "120mm"
+      "shell_type": "120mm",
+      "max_hp": 1000,
+      "damage_resistance": 0.70,
+      "deployment_type": "pushgun",
+      "center_spacing_m": 3.25,
+      "physical_width_m": 3
     },
     "Huber Exalt": {
       "name": "Huber Exalt",
@@ -59,7 +74,12 @@
       "max_spread_m": 35,
       "firing_time_s": 3,
       "reload_time_s": 4.5,
-      "shell_type": "150mm"
+      "shell_type": "150mm",
+      "max_hp": 5000,
+      "damage_resistance": 0.25,
+      "deployment_type": "entrenched",
+      "center_spacing_m": 9,
+      "entrenchment_radius_m": 4
     }
   },
   "ships": {
@@ -71,7 +91,8 @@
       "max_hp": 49500,
       "turret_count": 2,
       "reload_time_per_turret_s": 4.2,
-      "shells_per_turret": 2
+      "shells_per_turret": 2,
+      "turret_shell_type": "120mm"
     }
   }
 }

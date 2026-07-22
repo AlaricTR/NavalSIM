@@ -7,7 +7,7 @@ from typing import Dict, Tuple
 
 from .models import ArtilleryPlatform, ShellType, ShipDefinition
 
-DATA_FILENAME = "artillery_data_v5.json"
+DATA_FILENAME = "artillery_data_v6.json"
 
 
 def resolve_data_path() -> Path:
@@ -21,7 +21,7 @@ def resolve_data_path() -> Path:
         if candidate.is_file():
             return candidate
     raise FileNotFoundError(
-        f"Could not find {DATA_FILENAME}. Place it beside this Python file."
+        f"Could not find {DATA_FILENAME}. Place it beside the launcher."
     )
 
 
@@ -74,6 +74,10 @@ def load_artillery_data(
                 f"{key} references undefined shell type {shell_type!r}."
             )
 
+        deployment_type = str(item.get("deployment_type", "")).lower()
+        entrenchment_radius = item.get("entrenchment_radius_m")
+        physical_width = item.get("physical_width_m")
+
         platform = ArtilleryPlatform(
             name=str(item.get("name", key)),
             min_range_m=require_number(item, "min_range_m", key),
@@ -83,14 +87,46 @@ def load_artillery_data(
             firing_time_s=require_number(item, "firing_time_s", key),
             reload_time_s=require_number(item, "reload_time_s", key),
             shell_type=str(shell_type),
+            max_hp=require_number(item, "max_hp", key),
+            damage_resistance=require_number(item, "damage_resistance", key),
+            deployment_type=deployment_type,
+            center_spacing_m=require_number(item, "center_spacing_m", key),
+            entrenchment_radius_m=(
+                float(entrenchment_radius)
+                if isinstance(entrenchment_radius, (int, float))
+                else None
+            ),
+            physical_width_m=(
+                float(physical_width)
+                if isinstance(physical_width, (int, float))
+                else None
+            ),
         )
 
         if platform.max_range_m < platform.min_range_m:
             raise ValueError(f"{key} has max range below min range.")
-        if platform.max_spread_m < 0 or platform.min_spread_m <= 0:
+        if platform.max_spread_m <= 0 or platform.min_spread_m <= 0:
             raise ValueError(f"{key} spread values must be positive.")
         if platform.cycle_time_s <= 0:
             raise ValueError(f"{key} firing cycle must be positive.")
+        if platform.max_hp <= 0:
+            raise ValueError(f"{key} max_hp must be positive.")
+        if not 0.0 <= platform.damage_resistance < 1.0:
+            raise ValueError(f"{key} damage_resistance must be 0 to less than 1.")
+        if platform.center_spacing_m <= 0:
+            raise ValueError(f"{key} center_spacing_m must be positive.")
+        if deployment_type not in {"entrenched", "pushgun"}:
+            raise ValueError(
+                f"{key} deployment_type must be 'entrenched' or 'pushgun'."
+            )
+        if deployment_type == "entrenched":
+            if platform.entrenchment_radius_m is None or platform.entrenchment_radius_m <= 0:
+                raise ValueError(
+                    f"{key} must define a positive entrenchment_radius_m."
+                )
+        if deployment_type == "pushgun":
+            if platform.physical_width_m is None or platform.physical_width_m <= 0:
+                raise ValueError(f"{key} must define a positive physical_width_m.")
 
         platforms[key] = platform
 
@@ -98,6 +134,12 @@ def load_artillery_data(
     for key, item in ships_raw.items():
         if not isinstance(item, dict):
             raise ValueError(f"ships.{key} must be an object.")
+
+        turret_shell_type = str(item.get("turret_shell_type", ""))
+        if turret_shell_type not in shells:
+            raise ValueError(
+                f"{key} references undefined turret shell {turret_shell_type!r}."
+            )
 
         ship = ShipDefinition(
             name=str(item.get("name", key)),
@@ -112,6 +154,7 @@ def load_artillery_data(
                 item, "reload_time_per_turret_s", key
             ),
             shells_per_turret=int(require_number(item, "shells_per_turret", key)),
+            turret_shell_type=turret_shell_type,
         )
 
         if ship.max_hp <= 0 or ship.area_m2 <= 0:
@@ -120,8 +163,8 @@ def load_artillery_data(
             raise ValueError(f"{key} must have at least one compartment.")
         if ship.seconds_per_hole_to_fill_one_compartment <= 0:
             raise ValueError(f"{key} flooding time must be positive.")
-        if ship.turret_count < 0 or ship.shells_per_turret < 0:
-            raise ValueError(f"{key} turret values cannot be negative.")
+        if ship.turret_count <= 0 or ship.shells_per_turret <= 0:
+            raise ValueError(f"{key} turret values must be positive.")
         if ship.reload_time_per_turret_s <= 0:
             raise ValueError(f"{key} turret reload time must be positive.")
 
@@ -133,7 +176,7 @@ def load_artillery_data(
 def build_shell_type(
     shell_key: str,
     shell_data: Dict[str, dict],
-    ship_resistance: float,
+    target_resistance: float,
 ) -> ShellType:
     raw = shell_data[shell_key]
     base_damage = require_number(raw, "base_damage", shell_key)
@@ -146,11 +189,13 @@ def build_shell_type(
         raise ValueError(f"{shell_key} damage/radius values are invalid.")
     if not 0.0 <= hole_chance <= 1.0:
         raise ValueError(f"{shell_key} hole chance must be between 0 and 1.")
+    if not 0.0 <= target_resistance < 1.0:
+        raise ValueError("target_resistance must be between 0 and 1.")
 
     return ShellType(
         name=str(raw.get("name", shell_key)),
         base_damage=base_damage,
-        effective_damage=base_damage * (1.0 - ship_resistance),
+        effective_damage=base_damage * (1.0 - target_resistance),
         damage_radius_m=radius,
         hole_chance_on_valid_hit=hole_chance,
     )

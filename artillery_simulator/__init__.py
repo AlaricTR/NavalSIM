@@ -1,5 +1,3 @@
-"""Artillery vs Ship Simulator package, version 5."""
+"""Artillery vs ship Monte Carlo simulator package, version 6."""
 
-from .gui import SimulatorApp
-
-__all__ = ["SimulatorApp"]
+__version__ = "6.0"
