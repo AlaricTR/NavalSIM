@@ -1,0 +1,77 @@
+{
+  "metadata": {
+    "version": 5,
+    "notes": "Shell base damage is listed before ship resistance. The simulator applies ship resistance separately. Platform spread is linearly interpolated between minimum and maximum range. Ship definitions store hull, flooding, and turret data and populate the ship dropdown. Version 4 adds GUI hover help; game-data values are unchanged from version 3."
+  },
+  "global_modifiers": {
+    "ship_damage_resistance": 0.25
+  },
+  "shells": {
+    "120mm": {
+      "name": "120mm",
+      "base_damage": 400,
+      "max_damage_radius_m": 4,
+      "hole_chance_on_valid_hit": 0.5
+    },
+    "150mm": {
+      "name": "150mm",
+      "base_damage": 900,
+      "max_damage_radius_m": 7,
+      "hole_chance_on_valid_hit": 0.5
+    }
+  },
+  "artillery_platforms": {
+    "Thunderbolt": {
+      "name": "Thunderbolt",
+      "min_range_m": 200,
+      "max_range_m": 350,
+      "min_spread_m": 32.5,
+      "max_spread_m": 40,
+      "firing_time_s": 4,
+      "reload_time_s": 4.5,
+      "shell_type": "150mm"
+    },
+    "Huber Lariat": {
+      "name": "Huber Lariat",
+      "min_range_m": 100,
+      "max_range_m": 300,
+      "min_spread_m": 25,
+      "max_spread_m": 35,
+      "firing_time_s": 3,
+      "reload_time_s": 4.5,
+      "shell_type": "120mm"
+    },
+    "Koronides": {
+      "name": "Koronides",
+      "min_range_m": 100,
+      "max_range_m": 250,
+      "min_spread_m": 22.5,
+      "max_spread_m": 30,
+      "firing_time_s": 3,
+      "reload_time_s": 3.5,
+      "shell_type": "120mm"
+    },
+    "Huber Exalt": {
+      "name": "Huber Exalt",
+      "min_range_m": 100,
+      "max_range_m": 300,
+      "min_spread_m": 25,
+      "max_spread_m": 35,
+      "firing_time_s": 3,
+      "reload_time_s": 4.5,
+      "shell_type": "150mm"
+    }
+  },
+  "ships": {
+    "Conqueror": {
+      "name": "Conqueror",
+      "compartment_count": 3,
+      "seconds_per_hole_to_fill_one_compartment": 440,
+      "area_m2": 335,
+      "max_hp": 49500,
+      "turret_count": 2,
+      "reload_time_per_turret_s": 4.2,
+      "shells_per_turret": 2
+    }
+  }
+}
