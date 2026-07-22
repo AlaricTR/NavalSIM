@@ -16,4 +16,9 @@ Keep `artillery_data_v5.json`, `run_simulator_v5.py`, and the `artillery_simulat
 - Only the Conqueror is available - I have no data on other ships flooding-wise and cannot simulate them accurately
 - This does not simulate a DCL's decision to close bulwarks; the ship is considered to be a single floodable zone
 
+## To-Do
+- Add active firing of by the ship on counter-battery; this will be used to estimate a battery's lifetime while under fire
+- Add ship v ship simulations; likely broadside only
+- gather data on other ships during next devbranch if possible
+
 
