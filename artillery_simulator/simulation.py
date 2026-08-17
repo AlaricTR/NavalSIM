@@ -6,7 +6,7 @@ import random
 import statistics
 from typing import List, Tuple
 
-from .geometry import compute_hit_probabilities
+from .geometry import random_ship_impact
 from .models import SimulationConfig, SummaryResult, TrialResult
 from .ship_state import ShipCombatState
 
@@ -17,9 +17,6 @@ class EngagementSimulator:
     def __init__(self, config: SimulationConfig):
         self.config = config
         self.rng = random.Random(config.random_seed)
-        self.p_damage, self.p_hole = compute_hit_probabilities(
-            config.ship, config.battery.shell, config.battery.gun
-        )
 
     def run_trial(self, retreat_threshold: int) -> TrialResult:
         cfg = self.config
@@ -83,10 +80,16 @@ class EngagementSimulator:
                     post_retreat_remaining[index] -= 1
 
                 total_shells_fired += 1
-                hit, hole = state.apply_probabilistic_shell(
+                damage_multiplier, hit, leak_eligible = random_ship_impact(
                     self.rng,
-                    self.p_damage,
-                    self.p_hole,
+                    cfg.ship,
+                    cfg.battery.shell,
+                    cfg.battery.gun,
+                )
+                hit, hole = state.apply_shell_impact(
+                    self.rng,
+                    damage_multiplier,
+                    leak_eligible,
                     cfg.battery.shell,
                     time_s,
                     cfg.repair,

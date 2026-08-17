@@ -7,7 +7,7 @@ from typing import Dict, Tuple
 
 from .models import ArtilleryPlatform, ShellType, ShipDefinition
 
-DATA_FILENAME = "artillery_data_v6.json"
+DATA_FILENAME = "artillery_data_v7.json"
 
 
 def resolve_data_path() -> Path:
@@ -181,12 +181,17 @@ def build_shell_type(
     raw = shell_data[shell_key]
     base_damage = require_number(raw, "base_damage", shell_key)
     radius = require_number(raw, "max_damage_radius_m", shell_key)
+    falloff_radius = require_number(raw, "falloff_radius_m", shell_key)
     hole_chance = require_number(
         raw, "hole_chance_on_valid_hit", shell_key
     )
 
     if base_damage < 0 or radius <= 0:
         raise ValueError(f"{shell_key} damage/radius values are invalid.")
+    if falloff_radius <= radius:
+        raise ValueError(
+            f"{shell_key} falloff_radius_m must be greater than max_damage_radius_m."
+        )
     if not 0.0 <= hole_chance <= 1.0:
         raise ValueError(f"{shell_key} hole chance must be between 0 and 1.")
     if not 0.0 <= target_resistance < 1.0:
@@ -197,5 +202,6 @@ def build_shell_type(
         base_damage=base_damage,
         effective_damage=base_damage * (1.0 - target_resistance),
         damage_radius_m=radius,
+        falloff_radius_m=falloff_radius,
         hole_chance_on_valid_hit=hole_chance,
     )

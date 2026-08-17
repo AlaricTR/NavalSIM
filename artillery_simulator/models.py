@@ -11,6 +11,7 @@ class ShellType:
     base_damage: float
     effective_damage: float
     damage_radius_m: float
+    falloff_radius_m: float
     hole_chance_on_valid_hit: float = 0.50
 
 
@@ -175,6 +176,7 @@ class DuelTrialResult:
     ship_result: TrialResult
     battery_outcome: str
     battery_outcome_time_s: float
+    ship_flooding_fraction_at_duel_end: float
     battery_destroyed_time_s: Optional[float]
     guns_destroyed: int
     guns_remaining: int
@@ -199,6 +201,7 @@ class DuelSummaryResult:
     avg_guns_destroyed: float
     avg_guns_remaining: float
     avg_battery_hp_left: float
+    avg_ship_flooding_pct: float
     avg_ship_shells_fired: float
     avg_ship_shell_impacts: float
     avg_retargets: float

@@ -1,12 +1,12 @@
-# Artillery vs Ship Simulator v6
+# Artillery vs Ship Simulator v7
 
 Run from this folder with:
 
 ```bash
-python run_simulator_v6.py
+python run_simulator_v7.py
 ```
 
-Keep `artillery_data_v6.json`, `run_simulator_v6.py`, and the `artillery_simulator` folder together.
+Keep `artillery_data_v7.json`, `run_simulator_v7.py`, and the `artillery_simulator` folder together.
 
 ## Version 6 changes
 
@@ -49,3 +49,18 @@ The HP retreat threshold is fixed by the GUI field and is printed above the duel
 - `tooltip.py` — reusable hover tooltips
 - `gui.py` — form, tabs, warnings, validation, and run handling
 - `run_simulator_v6.py` — minimal launcher
+
+
+## Version 7 shell falloff
+
+Shell damage is now resolved from the actual sampled impact position.
+
+- 120mm: full damage from 0-4m, then linear falloff to zero at 11.25m.
+- 150mm: full damage from 0-7m, then linear falloff to zero at 11.25m.
+- Wet-hole chance is unchanged throughout the damaging outer radius.
+- Hits directly on the ship deck still cannot create wet holes.
+- Entrenchments remain a hard protection boundary: impacts outside the trench do no damage.
+- Exposed pushguns receive full/falloff splash normally and one shell can damage multiple guns.
+
+The Duel Results table now includes `Ship flood %`, the average flooding level at the instant
+the duel is resolved (retreat, battery destruction, ship destruction, or timeout).

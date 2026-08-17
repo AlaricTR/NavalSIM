@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "version": 6,
-    "notes": "Version 6 adds optional mutual ship-versus-battery duels, independent gun HP, deployment geometry, naval turret targeting, retarget delays, and duel result summaries. Naval turret range/spread is hardcoded in Python as 100-200m and 2.5-8.5m. Spread values are clamped outside listed ranges."
+    "version": 7,
+    "notes": "Version 7 adds linear shell damage falloff. 120mm shells deal full damage through 4m; 150mm shells deal full damage through 7m; both fall linearly to zero at a total radius of 11.25m. Wet-hole chance remains unchanged throughout the damaging splash radius. The duel summary also reports average ship flooding at the moment the duel resolves. Naval turret range/spread remains hardcoded in Python as 100-200m and 2.5-8.5m."
   },
   "global_modifiers": {
     "ship_damage_resistance": 0.25
@@ -11,13 +11,15 @@
       "name": "120mm",
       "base_damage": 400,
       "max_damage_radius_m": 4,
-      "hole_chance_on_valid_hit": 0.5
+      "hole_chance_on_valid_hit": 0.5,
+      "falloff_radius_m": 11.25
     },
     "150mm": {
       "name": "150mm",
       "base_damage": 900,
       "max_damage_radius_m": 7,
-      "hole_chance_on_valid_hit": 0.5
+      "hole_chance_on_valid_hit": 0.5,
+      "falloff_radius_m": 11.25
     }
   },
   "artillery_platforms": {
@@ -61,7 +63,7 @@
       "reload_time_s": 3.5,
       "shell_type": "120mm",
       "max_hp": 1000,
-      "damage_resistance": 0.70,
+      "damage_resistance": 0.7,
       "deployment_type": "pushgun",
       "center_spacing_m": 3.25,
       "physical_width_m": 3
@@ -86,12 +88,23 @@
     "Conqueror": {
       "name": "Conqueror",
       "compartment_count": 3,
-      "seconds_per_hole_to_fill_one_compartment": 440,
+      "seconds_per_hole_to_fill_one_compartment": 400,
       "area_m2": 335,
       "max_hp": 49500,
       "turret_count": 2,
       "reload_time_per_turret_s": 4.2,
       "shells_per_turret": 2,
+      "turret_shell_type": "120mm"
+    },
+    "Blacksteele": {
+      "name": "Blacksteele",
+      "compartment_count": 3,
+      "seconds_per_hole_to_fill_one_compartment": 400,
+      "area_m2": 335,
+      "max_hp": 49500,
+      "turret_count": 2,
+      "reload_time_per_turret_s": 2.2,
+      "shells_per_turret": 1,
       "turret_shell_type": "120mm"
     }
   }

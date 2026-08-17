@@ -67,8 +67,8 @@ def format_duel_summary_table(summaries: List[DuelSummaryResult]) -> str:
         "Retreat @ holes", "Runs", "Forced retreat %", "Battery dead first %",
         "Ship destroyed %", "Tie %", "Timeout %", "Avg time in fight",
         "Median time", "Avg death time", "Avg guns destroyed",
-        "Avg guns left", "Avg battery HP", "Ship shells", "Gun impacts",
-        "Retargets",
+        "Avg guns left", "Avg battery HP", "Ship flood %", "Ship shells",
+        "Gun impacts", "Retargets",
     ]
     rows: List[List[str]] = []
     for summary in summaries:
@@ -91,6 +91,7 @@ def format_duel_summary_table(summaries: List[DuelSummaryResult]) -> str:
             f"{summary.avg_guns_destroyed:.2f}",
             f"{summary.avg_guns_remaining:.2f}",
             f"{summary.avg_battery_hp_left:.0f}",
+            f"{summary.avg_ship_flooding_pct:.1f}",
             f"{summary.avg_ship_shells_fired:.1f}",
             f"{summary.avg_ship_shell_impacts:.1f}",
             f"{summary.avg_retargets:.2f}",

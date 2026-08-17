@@ -30,6 +30,60 @@ def expanded_rectangle_area(
     return length * width + perimeter * radius + math.pi * radius * radius
 
 
+def shell_damage_multiplier(distance_m: float, shell: ShellType) -> float:
+    """Return 1 inside the full-damage radius, then linearly fall to 0."""
+    if distance_m <= shell.damage_radius_m:
+        return 1.0
+    if distance_m >= shell.falloff_radius_m:
+        return 0.0
+    return (
+        shell.falloff_radius_m - distance_m
+    ) / (
+        shell.falloff_radius_m - shell.damage_radius_m
+    )
+
+
+def point_to_centered_rectangle_distance(
+    x: float,
+    y: float,
+    length: float,
+    width: float,
+) -> Tuple[float, bool]:
+    """Shortest distance to a centered rectangle and whether point is on its deck."""
+    half_length = length / 2.0
+    half_width = width / 2.0
+    on_deck = abs(x) <= half_length and abs(y) <= half_width
+    dx = max(abs(x) - half_length, 0.0)
+    dy = max(abs(y) - half_width, 0.0)
+    return math.hypot(dx, dy), on_deck
+
+
+def random_ship_impact(
+    rng: random.Random,
+    ship: ShipModel,
+    shell: ShellType,
+    gun: GunModel,
+) -> Tuple[float, bool, bool]:
+    """
+    Sample one shell impact in the gun's spread circle.
+
+    Returns (damage_multiplier, damaging_hit, leak_eligible). Deck impacts can
+    damage but cannot create wet holes. Splash outside the deck can create a
+    wet hole anywhere damage remains above zero, including the falloff band.
+    """
+    impact_x, impact_y = random_point_in_spread(rng, 0.0, gun.spread_radius_m)
+    length, width = rectangle_dimensions_from_area(
+        ship.area_m2, ship.length_width_ratio
+    )
+    distance, on_deck = point_to_centered_rectangle_distance(
+        impact_x, impact_y, length, width
+    )
+    multiplier = shell_damage_multiplier(distance, shell)
+    damaging_hit = multiplier > 0.0
+    leak_eligible = damaging_hit and not on_deck
+    return multiplier, damaging_hit, leak_eligible
+
+
 def compute_hit_probabilities(
     ship: ShipModel, shell: ShellType, gun: GunModel
 ) -> Tuple[float, float]:
@@ -37,7 +91,7 @@ def compute_hit_probabilities(
         ship.area_m2, ship.length_width_ratio
     )
     dispersion_area = math.pi * gun.spread_radius_m**2
-    damage_area = expanded_rectangle_area(length, width, shell.damage_radius_m)
+    damage_area = expanded_rectangle_area(length, width, shell.falloff_radius_m)
     valid_hole_area = max(0.0, damage_area - ship.area_m2)
 
     p_damage = min(1.0, damage_area / dispersion_area)
@@ -158,15 +212,24 @@ def impacted_guns(
     living_indices: Iterable[int],
     platform: ArtilleryPlatform,
     shell: ShellType,
-) -> List[int]:
-    if platform.deployment_type == "entrenched":
-        vulnerable_radius = platform.entrenchment_radius_m or 0.0
-    else:
-        vulnerable_radius = shell.damage_radius_m
+) -> List[Tuple[int, float]]:
+    """
+    Return (gun_index, damage_multiplier) for every damaged gun.
 
-    impacted: List[int] = []
+    Entrenchments are a hard gate: an impact outside the trench does no damage
+    even if shell splash would otherwise reach the gun. Pushguns receive normal
+    full/falloff splash damage out to the shell's outer radius.
+    """
+    impacted: List[Tuple[int, float]] = []
     for index in living_indices:
         distance = math.hypot(impact_x - centers[index], impact_y)
-        if distance <= vulnerable_radius + 1e-9:
-            impacted.append(index)
+
+        if platform.deployment_type == "entrenched":
+            trench_radius = platform.entrenchment_radius_m or 0.0
+            if distance > trench_radius + 1e-9:
+                continue
+
+        multiplier = shell_damage_multiplier(distance, shell)
+        if multiplier > 0.0:
+            impacted.append((index, multiplier))
     return impacted

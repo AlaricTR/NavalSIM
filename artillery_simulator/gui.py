@@ -33,7 +33,7 @@ from .tooltip import ToolTip
 class SimulatorApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Artillery vs Ship Simulator v6")
+        self.title("Artillery vs Ship Simulator v7")
         self.geometry("1380x850")
         self.minsize(1080, 700)
 

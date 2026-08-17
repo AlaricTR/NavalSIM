@@ -10,8 +10,8 @@ from .geometry import (
     RETARGET_MAX_S,
     RETARGET_MIN_S,
     choose_best_aim_center,
-    compute_hit_probabilities,
     impacted_guns,
+    random_ship_impact,
     linear_gun_centers,
     naval_spread_at_range,
     needs_retarget,
@@ -38,9 +38,6 @@ class DuelEngagementSimulator:
         self.config = config
         self.naval_shell = naval_shell
         self.rng = random.Random(config.random_seed)
-        self.p_damage, self.p_hole = compute_hit_probabilities(
-            config.ship, config.battery.shell, config.battery.gun
-        )
         self.naval_spread_m = naval_spread_at_range(
             config.battery.engagement_range_m
         )
@@ -78,8 +75,11 @@ class DuelEngagementSimulator:
                 self.naval_shell,
             )
             impact_count += len(targets)
-            for index in targets:
-                gun_hp[index] = max(0.0, gun_hp[index] - effective_damage)
+            for index, damage_multiplier in targets:
+                gun_hp[index] = max(
+                    0.0,
+                    gun_hp[index] - effective_damage * damage_multiplier,
+                )
 
         return shell_count, impact_count
 
@@ -101,6 +101,7 @@ class DuelEngagementSimulator:
         battery_outcome: Optional[str] = None
         battery_outcome_time: Optional[float] = None
         battery_destroyed_time: Optional[float] = None
+        ship_flooding_at_duel_end: Optional[float] = None
 
         battery_shells_fired = 0
         battery_damaging_hits = 0
@@ -144,6 +145,7 @@ class DuelEngagementSimulator:
                 if battery_outcome is None:
                     battery_outcome = "ship_destroyed"
                     battery_outcome_time = time_s
+                    ship_flooding_at_duel_end = min(1.0, state.flooding)
                 break
 
             if (
@@ -199,10 +201,16 @@ class DuelEngagementSimulator:
                     post_retreat_remaining[index] -= 1
 
                 battery_shells_fired += 1
-                hit, hole = state.apply_probabilistic_shell(
+                damage_multiplier, hit, leak_eligible = random_ship_impact(
                     self.rng,
-                    self.p_damage,
-                    self.p_hole,
+                    cfg.ship,
+                    cfg.battery.shell,
+                    cfg.battery.gun,
+                )
+                hit, hole = state.apply_shell_impact(
+                    self.rng,
+                    damage_multiplier,
+                    leak_eligible,
                     cfg.battery.shell,
                     time_s,
                     cfg.repair,
@@ -250,16 +258,20 @@ class DuelEngagementSimulator:
                     battery_outcome = "simultaneous"
                     battery_outcome_time = time_s
                     battery_destroyed_time = time_s
+                    ship_flooding_at_duel_end = min(1.0, state.flooding)
                 elif battery_dead_now:
                     battery_outcome = "battery_destroyed_first"
                     battery_outcome_time = time_s
                     battery_destroyed_time = time_s
+                    ship_flooding_at_duel_end = min(1.0, state.flooding)
                 elif newly_retreating:
                     battery_outcome = "forced_retreat"
                     battery_outcome_time = time_s
+                    ship_flooding_at_duel_end = min(1.0, state.flooding)
                 elif death_after_fire:
                     battery_outcome = "ship_destroyed"
                     battery_outcome_time = time_s
+                    ship_flooding_at_duel_end = min(1.0, state.flooding)
 
             if death_after_fire:
                 final_outcome = death_after_fire
@@ -308,11 +320,14 @@ class DuelEngagementSimulator:
             if battery_outcome is None:
                 battery_outcome = "timeout"
                 battery_outcome_time = time_s
+                ship_flooding_at_duel_end = min(1.0, state.flooding)
 
         if battery_outcome is None:
             battery_outcome = "timeout"
         if battery_outcome_time is None:
             battery_outcome_time = time_s
+        if ship_flooding_at_duel_end is None:
+            ship_flooding_at_duel_end = min(1.0, state.flooding)
 
         ship_result = TrialResult(
             retreat_threshold=retreat_threshold,
@@ -335,6 +350,7 @@ class DuelEngagementSimulator:
             ship_result=ship_result,
             battery_outcome=battery_outcome,
             battery_outcome_time_s=battery_outcome_time,
+            ship_flooding_fraction_at_duel_end=ship_flooding_at_duel_end,
             battery_destroyed_time_s=battery_destroyed_time,
             guns_destroyed=cfg.battery.gun_count - guns_remaining,
             guns_remaining=guns_remaining,
@@ -418,6 +434,9 @@ def summarize_duel_trials(
         ),
         avg_battery_hp_left=statistics.mean(
             trial.battery_hp_left for trial in trials
+        ),
+        avg_ship_flooding_pct=100.0 * statistics.mean(
+            trial.ship_flooding_fraction_at_duel_end for trial in trials
         ),
         avg_ship_shells_fired=statistics.mean(
             trial.ship_shells_fired for trial in trials

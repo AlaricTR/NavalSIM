@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch Artillery vs Ship Simulator version 6."""
+"""Launch Artillery vs Ship Simulator version 7."""
 
 import tkinter as tk
 from tkinter import messagebox

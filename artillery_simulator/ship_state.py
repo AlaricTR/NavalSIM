@@ -48,20 +48,24 @@ class ShipCombatState:
         )
         self.flooding += dt * net_holes / whole_ship_fill_time_per_hole
 
-    def apply_probabilistic_shell(
+    def apply_shell_impact(
         self,
         rng: random.Random,
-        p_damage: float,
-        p_hole: float,
+        damage_multiplier: float,
+        leak_eligible: bool,
         shell: ShellType,
         current_time: float,
         repair: RepairModel,
     ) -> Tuple[bool, bool]:
-        damaging_hit = rng.random() < p_damage
-        hole_created = rng.random() < p_hole
+        """Apply explicit full/falloff damage and the shell's unchanged leak roll."""
+        damaging_hit = damage_multiplier > 0.0
+        hole_created = (
+            leak_eligible
+            and rng.random() < shell.hole_chance_on_valid_hit
+        )
 
         if damaging_hit:
-            self.hp -= shell.effective_damage
+            self.hp -= shell.effective_damage * damage_multiplier
         if hole_created:
             self.active_holes += 1
             self.max_active_holes = max(self.max_active_holes, self.active_holes)
