@@ -8,7 +8,7 @@ python run_simulator_v7.py
 
 Keep `artillery_data_v7.json`, `run_simulator_v7.py`, and the `artillery_simulator` folder together.
 
-## Version 6 changes
+## Version 7 changes
 
 - Adds an optional **Ship fires at battery (duel)** checkbox.
 - The duel is not simulated when the checkbox is clear.
